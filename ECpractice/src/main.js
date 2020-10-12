@@ -5,13 +5,18 @@ import App from './App'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 import router from './router'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css';
 import 'bootstrap'
+import './bus'
 
 
 Vue.use(VueAxios, axios)
 
 Vue.config.productionTip = false
 axios.defaults.withCredentials = true
+ 
+Vue.component('loading',Loading);
 
 /* eslint-disable no-new */
 new Vue({
@@ -39,5 +44,4 @@ router.beforeEach((to, from, next) => {
   } else {
     next()
   }
-
 })

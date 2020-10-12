@@ -1,7 +1,11 @@
 <template>
   <div>
+    <loading :active.sync="isLoading"></loading>
+
     <div class="text-right mt-4">
-      <button class="btn btn-primary" @click="openModal(true)">建立新的產品</button>
+      <button class="btn btn-primary" @click="openModal(true)">
+        建立新的產品
+      </button>
     </div>
     <table class="table mt-4">
       <thead>
@@ -29,11 +33,40 @@
             <span v-else>未啟用</span>
           </td>
           <td>
-            <button class="btn btn-outline-primary btn-sm" @click="openModal(false , item)">編輯</button>
+            <button
+              class="btn btn-outline-primary btn-sm"
+              @click="openModal(false, item)"
+            >
+              編輯
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
+    <nav aria-label="Page navigation example">
+      <ul class="pagination">
+        <li class="page-item" :class="{ disabled: !pagination.has_pre }">
+          <a class="page-link" href="#" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+        <li
+          class="page-item"
+          v-for="page in pagination.total_pages"
+          :key="page"
+          :class="{ 'active': pagination.current_page === page }"
+        >
+          <a class="page-link" href="#" @click.prevent="getProducts(page)">{{
+            page
+          }}</a>
+        </li>
+        <li class="page-item" :class="{ disabled: pagination.has_has_next }">
+          <a class="page-link" href="#" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
     <!-- Modal -->
     <div
       class="modal fade"
@@ -74,21 +107,20 @@
                 <div class="form-group">
                   <label for="customFile"
                     >或 上傳圖片
-                    <i class="fas fa-spinner fa-spin"></i>
+                    <i
+                      class="fas fa-spinner fa-spin"
+                      v-if="status.fileUploadind"
+                    ></i>
                   </label>
                   <input
                     type="file"
                     id="customFile"
                     class="form-control"
-                    ref="files"
+                    ref="files000"
+                    @change="uploadFile"
                   />
                 </div>
-                <img
-                  :src="tempProduct.imageUrl"
-                  img="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=828346ed697837ce808cae68d3ddc3cf&auto=format&fit=crop&w=1350&q=80"
-                  class="img-fluid"
-                  alt=""
-                />
+                <img :src="tempProduct.imageUrl" class="img-fluid" alt="" />
               </div>
               <div class="col-sm-8">
                 <div class="form-group">
@@ -259,15 +291,23 @@ export default {
       products: [],
       tempProduct: {},
       isNew: false,
+      isLoading: false,
+      status: {
+        fileUploadind: false,
+      },
+      pagination: {},
     };
   },
   methods: {
-    getProducts() {
+    getProducts(page = 1) {
       const vm = this;
-      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/products`;
+      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/products?page${page}`;
+      vm.isLoading = true;
       this.$http.get(api).then((response) => {
         console.log("這是Product取得的", response.data);
         vm.products = response.data.products;
+        vm.isLoading = false;
+        vm.pagination = response.data.pagination;
       });
     },
     openModal(isNew, item) {
@@ -282,11 +322,11 @@ export default {
     },
     updateProduct() {
       const vm = this;
-      let httpMethod = 'post'
+      let httpMethod = "post";
       let api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/product`;
       if (!vm.isNew) {
         api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/product/${vm.tempProduct.id}`;
-        httpMethod = 'put'
+        httpMethod = "put";
       }
       this.$http[httpMethod](api, { data: vm.tempProduct }).then((response) => {
         if (response.data.success) {
@@ -298,6 +338,33 @@ export default {
           console.log("新增資料失敗");
         }
       });
+    },
+    uploadFile() {
+      console.log(this);
+      const uplodedFile = this.$refs.files000.files[0];
+      const vm = this;
+      const formData = new FormData();
+      vm.status.fileUploadind = true;
+      formData.append("file-to-upload", uplodedFile);
+      const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/upload`;
+      this.$http
+        .post(url, formData, {
+          headers: {
+            "content-type": "multipart/form-data",
+          },
+        })
+        .then((response) => {
+          console.log(response.data);
+          vm.status.fileUploadind = false;
+          if (response.data.success) {
+            // vm.tempProduct.imageUrl = response.data.imageUrl
+            // console.log(vm.tempProduct)
+            vm.$set(vm.tempProduct, "imageUrl", response.data.imageUrl);
+          } else {
+            this.$bus.$emit("message:push", response.data.message, "danger");
+            console.log(this.$bus);
+          }
+        });
     },
   },
   created() {
