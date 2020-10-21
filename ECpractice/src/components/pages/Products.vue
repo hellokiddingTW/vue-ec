@@ -23,10 +23,10 @@
           <td>{{ item.category }}</td>
           <td>{{ item.title }}</td>
           <td class="text-right">
-            {{ item.origin_price }}
+            {{ item.origin_price | currency }}
           </td>
           <td class="text-right">
-            {{ item.price }}
+            {{ item.price | currency }}
           </td>
           <td>
             <span class="text-success" v-if="item.is_enabled">啟用</span>
@@ -46,7 +46,7 @@
     <nav aria-label="Page navigation example">
       <ul class="pagination">
         <li class="page-item" :class="{ disabled: !pagination.has_pre }">
-          <a class="page-link" href="#" aria-label="Previous">
+          <a class="page-link" href="#" aria-label="Previous" @click.prevent="getProducts(pagination.current_page-1)">
             <span aria-hidden="true">&laquo;</span>
           </a>
         </li>
@@ -60,8 +60,8 @@
             page
           }}</a>
         </li>
-        <li class="page-item" :class="{ disabled: pagination.has_has_next }">
-          <a class="page-link" href="#" aria-label="Next">
+        <li class="page-item" :class="{ disabled: !pagination.has_next }">
+          <a class="page-link" href="#" aria-label="Next" @click.prevent="getProducts(pagination.current_page+1)">
             <span aria-hidden="true">&raquo;</span>
           </a>
         </li>
@@ -301,7 +301,7 @@ export default {
   methods: {
     getProducts(page = 1) {
       const vm = this;
-      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/products?page${page}`;
+      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/products?page=${page}`;
       vm.isLoading = true;
       this.$http.get(api).then((response) => {
         console.log("這是Product取得的", response.data);
