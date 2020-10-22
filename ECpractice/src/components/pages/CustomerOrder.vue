@@ -142,7 +142,7 @@
             {{ item.qty }}
           </td>
           <td>
-            {{ (item.final_total * item.product.num) | currency }}
+            {{ item.final_total | currency }}
           </td>
         </tr>
       </tbody>
@@ -219,6 +219,9 @@ export default {
       this.$http.get(api).then((response) => {
         console.log("這是getCart行為", response.data);
         vm.myCart = response.data.data.carts;
+        vm.myCart.sort((a,b)=>{
+          return a.product.price - b.product.price
+         })
         vm.isLoading = false;
         vm.cartInfo();
       });
@@ -226,9 +229,6 @@ export default {
     cartInfo() {
       const vm = this;
       let allcartProduct = [];
-      let cartproductNum = 0;
-      let cartproductMoney = 0;
-      let cartproductTitel = "";
       let cartTotal = {};
       vm.myCart.forEach((el) => {
         allcartProduct.push(el.product.title);
@@ -238,28 +238,35 @@ export default {
       });
       console.log(allcartProduct);
       console.log(cartInfo);
-
       cartInfo.forEach((el) => {
+        let cartproductNum = 0;
+        let cartproductMoney = 0;
+        let cartproductTitle = "";
         vm.myCart.forEach((item) => {
           if (el === item.product.title) {
-            console.log(item)
-            cartproductMoney += item.final_total * item.product.num;
-            cartproductNum += item.product.num;
-            cartproductTitel = item.product.titel
-            console.log(cartproductMoney)
-          }else{
-            cartproductMoney = 0
-            cartproductNum = 0
-            cartproductTitel = ''
-
+            console.log(item);
+            cartproductMoney += item.final_total;
+            cartproductNum += item.qty;
+            cartproductTitle = item.product.title;
+            console.log(
+              `title：`,
+              item.product.title,
+              `money：`,
+              cartproductMoney
+            );
+            // cartTotal.Title = cartproductTitle;
+            // cartTotal.Num = cartproductNum;
+            // cartTotal.Money = cartproductMoney;
+            // vm.mycartTotal.push(cartTotal)
           }
+          
+            
+
+        
+          
         });
-       
-        // vm.cartTotal.Title = cartproductTitel
-        // vm.cartTotal.Num = cartproductNum
-        // vm.cartTotal.Money = cartproductMoney
       });
-      // console.log(vm.cartTotal)
+      // console.log(cartTotal)
     },
   },
   created() {
