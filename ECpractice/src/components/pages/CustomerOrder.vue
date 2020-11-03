@@ -127,26 +127,113 @@
       </div>
     </div>
 
-    <table class="table mt-4">
-      <thead>
-        <tr>
-          <th width="100">品名</th>
-          <th width="100">數量</th>
-          <th width="90">單價</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in myCart" :key="item.id">
-          <td>{{ item.product.title }}</td>
-          <td>
-            {{ item.qty }}
-          </td>
-          <td>
-            {{ item.final_total | currency }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Modal2 -->
+    <div
+      class="modal fade"
+      id="ruSure"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="ruSure">注意！！！</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">歐低，確定要刪除嗎？</div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+              @click="sureOrnot=false"
+            >
+              還是算惹
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              @click="sureOrnot=true"
+            >
+              我不要了
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row justify-content-center my-5">
+      <div class="col-md-6">
+        <table class="table mt-4">
+          <thead>
+            <tr>
+              <th>品名</th>
+              <th>數量</th>
+              <th>單價</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in mycartFinal" :key="item.id">
+              <td>{{ item.el }}</td>
+              <td class="text-center">
+                {{ item.Num }}
+              </td>
+              <td class="text-center">
+                {{ item.Money | currency }}
+              </td>
+              <td class="text-right">
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm"
+                  @click="openModal(item.Id)"
+                >
+                  <i class="far fa-trash-alt"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="text-right"><h2>總計</h2></td>
+              <td class="text-center">
+                <h2>{{ totalCost }}元</h2>
+              </td>
+            </tr>
+            <!-- <tr v-if="cart.final_total !== cart.total">
+              <td colspan="3" class="text-right text-success">折扣價</td>
+              <td class="text-right text-success">{{ cart.final_total }}</td>
+            </tr> -->
+          </tfoot>
+        </table>
+        <div class="input-group mb-3 input-group-sm">
+          <input
+            type="text"
+            class="form-control"
+            v-model="coupon_code"
+            placeholder="請輸入優惠碼"
+          />
+          <div class="input-group-append">
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              @click="addCouponCode"
+            >
+              套用優惠碼
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>    
 
@@ -157,19 +244,21 @@
 
 <script>
 import $ from "jquery";
-
 export default {
   data() {
     return {
       products: [],
       singleProduct: {},
       myCart: [],
-      mycartTotal: [],
+      mycartFinal: [],
+      totalCost: 0,
       status: {
         loadingItem: "",
         loadingCart: "",
       },
       isLoading: false,
+      coupon_code: "",
+      sureOrnot: false,
     };
   },
   methods: {
@@ -208,6 +297,8 @@ export default {
           alert("成功加入購物車");
         }
         vm.status.loadingCart = "";
+        vm.mycartFinal = [];
+        vm.totalCost = 0;
         vm.getCart();
         $("#singleProductModal").modal("hide");
       });
@@ -219,54 +310,85 @@ export default {
       this.$http.get(api).then((response) => {
         console.log("這是getCart行為", response.data);
         vm.myCart = response.data.data.carts;
-        vm.myCart.sort((a,b)=>{
-          return a.product.price - b.product.price
-         })
+        vm.myCart.sort((a, b) => {
+          return a.product.price - b.product.price;
+        });
         vm.isLoading = false;
         vm.cartInfo();
       });
     },
+
     cartInfo() {
       const vm = this;
       let allcartProduct = [];
-      let cartTotal = {};
       vm.myCart.forEach((el) => {
         allcartProduct.push(el.product.title);
       });
-      let cartInfo = allcartProduct.filter((el, index, arr) => {
+      let productinCart = allcartProduct.filter((el, index, arr) => {
         return arr.indexOf(el) === index;
       });
       console.log(allcartProduct);
-      console.log(cartInfo);
-      cartInfo.forEach((el) => {
-        let cartproductNum = 0;
-        let cartproductMoney = 0;
-        let cartproductTitle = "";
+      console.log(productinCart);
+      productinCart.forEach((el) => {
+        let Num = 0;
+        let Money = 0;
+        let Id = "";
         vm.myCart.forEach((item) => {
           if (el === item.product.title) {
-            console.log(item);
-            cartproductMoney += item.final_total;
-            cartproductNum += item.qty;
-            cartproductTitle = item.product.title;
-            console.log(
-              `title：`,
-              item.product.title,
-              `money：`,
-              cartproductMoney
-            );
-            // cartTotal.Title = cartproductTitle;
-            // cartTotal.Num = cartproductNum;
-            // cartTotal.Money = cartproductMoney;
-            // vm.mycartTotal.push(cartTotal)
+            Money += item.final_total;
+            Num += item.qty;
+            Id = item.id;
+            vm.totalCost += item.final_total;
           }
-          
-            
-
-        
-          
+        });
+        vm.mycartFinal.push({
+          el,
+          Money,
+          Num,
+          Id,
         });
       });
       // console.log(cartTotal)
+    },
+
+    removeCartItem(id) {
+      const vm = this;
+      const coupon = {
+        code: vm.coupon_code,
+      };
+      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/cart/${id}`;
+      // vm.isLoading = true;
+      this.$http.delete(api, { data: coupon }).then((response) => {
+        console.log("這是removeCart行為", response.data);
+        vm.mycartFinal = [];
+        vm.totalCost = 0;
+        // vm.myCart = response.data.data.carts;
+        // vm.myCart.sort((a, b) => {
+        //   return a.product.price - b.product.price;
+        // });
+        // vm.isLoading = false;
+        vm.getCart();
+      });
+    },
+    openModal(id) {
+      $("#ruSure").modal("show");
+      if (this.sureOrnot) {
+        this.removeCartItem(id);
+        $("#ruSure").modal("hide");
+      } else {
+        $("#ruSure").modal("hide");
+      }
+    },
+    addCouponCode() {
+      const vm = this;
+      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/cart/${id}`;
+      // vm.isLoading = true;
+      this.$http.delete(api).then((response) => {
+        console.log("這是removeCart行為", response.data);
+        vm.mycartFinal = [];
+        vm.totalCost = 0;
+        vm.getCart();
+      });
     },
   },
   created() {
@@ -275,3 +397,4 @@ export default {
   },
 };
 </script>
+

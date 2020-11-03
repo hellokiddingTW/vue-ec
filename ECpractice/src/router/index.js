@@ -7,8 +7,10 @@ import VueRouter from 'vue-router'
 import Login from '@/components/pages/Login'
 import Dashboard from '@/components/Dashboard'
 import Products from '@/components/pages/Products'
-// import Orders from '@/components/pages/Orders'
+import Orders from '@/components/pages/Orders'
 import CustomerOrder from '@/components/pages/CustomerOrder'
+import Coupons from '@/components/pages/Coupons'
+
 
 Vue.use(VueRouter)
 
@@ -26,7 +28,7 @@ export default new VueRouter({
         // },
         {
             name: 'Login',
-            path: '/Login',
+            path: '/login',
             component: Login,
         },
         {
@@ -36,9 +38,20 @@ export default new VueRouter({
             children: [
                 {
                     name: 'Products',
-                    path: 'Products',
+                    path: 'products',
                     component: Products,
                     meta: { requiresAuth: true },
+                },
+                {
+                    name: 'Orders',
+                    path: 'orders',
+                    component:Orders,
+                    meta: { requiresAuth: true },
+                },
+                {
+                    name: 'Coupons',
+                    path: 'coupons',
+                    component: Coupons,
                 }
             ]
         },
@@ -51,7 +64,8 @@ export default new VueRouter({
                     name: 'CustomerOrder',
                     path: 'customer_order',
                     component: CustomerOrder,
-                }
+                },
+                
             ]
         },
     ]
